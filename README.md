@@ -1,6 +1,6 @@
 # AutoSpeaker: Neural Architecture Search for Speaker Recognition
 
-Code for this paper [AutoSpeaker: Neural Architecture Search for Speaker Recognition](TBD)
+Code for this paper [AutoSpeaker: Neural Architecture Search for Speaker Recognition](https://arxiv.org/abs/2005.03215)
 
 Shaojin Ding*, Tianlong Chen*, Xinyu Gong, Weiwei Zha, Zhangyang Wang
 
@@ -92,7 +92,12 @@ Our proposed approach outperforms speaker recognition systems based on VGG-M, Re
 If you use this code for your research, please cite our paper.
 
 ```
-​```
-TBD
-​```
+@misc{ding2020autospeech,
+    title={AutoSpeech: Neural Architecture Search for Speaker Recognition},
+    author={Shaojin Ding and Tianlong Chen and Xinyu Gong and Weiwei Zha and Zhangyang Wang},
+    year={2020},
+    eprint={2005.03215},
+    archivePrefix={arXiv},
+    primaryClass={eess.AS}
+}
 ```
