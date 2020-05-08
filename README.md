@@ -101,3 +101,7 @@ If you use this code for your research, please cite our paper.
     primaryClass={eess.AS}
 }
 ```
+
+## Acknowledgement
+
+Part of the codes are adapted from [deep-speaker](https://github.com/philipperemy/deep-speaker) and [Real-Time-Voice-Cloning](https://github.com/CorentinJ/Real-Time-Voice-Cloning).
