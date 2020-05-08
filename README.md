@@ -69,7 +69,7 @@ The data should be organized as:
 
 ### Visualization
 
-normal cell | reduction cell
+left: normal cell. right: reduction cell
 <p align="center">
 <img src="figures/searched_arch_normal.png" alt="progress_convolutional_normal" width="45%">
 <img src="figures/searched_arch_reduce.png" alt="progress_convolutional_reduce" width="45%">
