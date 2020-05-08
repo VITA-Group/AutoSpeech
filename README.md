@@ -1,4 +1,4 @@
-# AutoSpeaker: Neural Architecture Search for Speaker Recognition
+# AutoSpeech: Neural Architecture Search for Speaker Recognition
 
 Code for this paper [AutoSpeaker: Neural Architecture Search for Speaker Recognition](https://arxiv.org/abs/2005.03215)
 
