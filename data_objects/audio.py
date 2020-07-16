@@ -32,7 +32,6 @@ def wav_to_spectrogram(wav):
         hop_length=int(sampling_rate * window_step / 1000),
         win_length=int(sampling_rate * window_length / 1000),
     ))
-    frames = np.log(np.maximum(frames, np.finfo(np.float32).eps))
     return frames.astype(np.float32).T
 
 
