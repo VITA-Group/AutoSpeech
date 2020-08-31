@@ -81,7 +81,7 @@ def main():
         model.load_state_dict(checkpoint['state_dict'])
         args.path_helper = checkpoint['path_helper']
 
-        logger = create_logger(args.path_helper['log_path'])
+        logger = create_logger(os.path.dirname(args.load_path))
         logger.info("=> loaded checkpoint '{}'".format(args.load_path))
     else:
         raise AssertionError('Please specify the model to evaluate')
@@ -90,7 +90,7 @@ def main():
 
     # dataloader
     test_dataset_identification = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
+        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.SUB_DIR, cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
 
 
     test_loader_identification = torch.utils.data.DataLoader(

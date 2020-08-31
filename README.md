@@ -11,12 +11,12 @@ Speaker  recognition  systems  based  on  Convolutional  Neural Networks (CNNs) 
 
 Our proposed approach outperforms speaker recognition systems based on VGG-M, ResNet-18, and ResNet-34 backbones. The detailed comparison can be found in our paper.
 
-|    Method     | Top-1 |  EER  | Parameters |
-| :------------: | :---: | :---: | :---: |
-|  VGG-M    | 80.50 | 10.2 | 67M |
-| ResNet-18 | 79.48 | 8.17 | 12M |
-| ResNet-34 | 81.34 | 4.64 | 22M |
-| Proposed  | **87.66** | **1.45** | **18M** |
+|    Method     | Top-1 |  EER  | Parameters | Pretrained model 
+| :------------: | :---: | :---: | :---: | :---: | 
+|  VGG-M    | 80.50 | 10.20 | 67M | [iden/veri](https://github.com/a-nagrani/VGGVox) |
+| ResNet-18 | 79.48 | 12.30 | 12M | [iden](https://drive.google.com/file/d/16P071LB1kwiQEoKhQRD-B3XBSwQR_6eG/view?usp=sharing), [veri](https://drive.google.com/file/d/1uNA34GTPBmrlG2gTwgrhkTfsn7zBnC7d/view?usp=sharing) |
+| ResNet-34 | 81.34 | 11.99| 22M | [iden](https://drive.google.com/file/d/1UJ_N5hQkVESifNJlvFdCte0yMPaqbaXJ/view?usp=sharing),  [veri](https://drive.google.com/file/d/1JD34RhuvDoc19ulWQNPNArSKfDXpUYud/view?usp=sharing) |
+| Proposed  | **87.66** | **8.95** | **18M** | [iden](https://drive.google.com/file/d/1Ph4atwl603xrbiq8OkvjdINGBCIQyXy9/view?usp=sharing),  [veri](https://drive.google.com/file/d/16TrxrkRK5A0J6UxjYrQHUlEBdAESC087/view?usp=sharing) |
 
 ### Visualization
 
@@ -50,12 +50,24 @@ The data should be organized as:
 * data preprocess:
 
     `python data_preprocess.py /path/to/VoxCeleb1`
+    
+    The output folder of it should be:
+    * feature
+        * dev
+        * test
+        * merged
+    
+    dev and test are used for verification, and merged are used for identification.
 
 * Training and evaluating ResNet-18, ResNet-34 baselines:
 
-    `python train_baseline.py --cfg exps/baseline/resnet18.yaml`
+    `python train_baseline_identification.py --cfg exps/baseline/resnet18_iden.yaml`
     
-    `python train_baseline.py --cfg exps/baseline/resnet34.yaml`
+    `python train_baseline_verification.py --cfg exps/baseline/resnet18_veri.yaml`
+    
+    `python train_baseline_identification.py --cfg exps/baseline/resnet34_iden.yaml`
+    
+    `python train_baseline_verification.py --cfg exps/baseline/resnet34_veri.yaml`
     
     You need to modify the `DATA_DIR` field in `.yaml` file.
 
@@ -65,25 +77,30 @@ The data should be organized as:
     
     You need to modify the `DATA_DIR` field in `.yaml` file.
     
-* Training from scratch:
+* Training from scratch for identification:
     
-    `python train.py --cfg exps/scratch/scratch.yaml --text_arch GENOTYPE`
+    `python train_identification.py --cfg exps/scratch/scratch.yaml --text_arch GENOTYPE`
     
     You need to modify the `DATA_DIR` field in `.yaml` file.
     
     `GENOTYPE` is the search architecture object. For example, the `GENOTYPE` of the architecture report in the paper is:
     
     `"Genotype(normal=[('dil_conv_5x5', 1), ('dil_conv_3x3', 0), ('dil_conv_5x5', 0), ('sep_conv_3x3', 1), ('sep_conv_3x3', 1), ('sep_conv_3x3', 2), ('dil_conv_3x3', 2), ('max_pool_3x3', 1)], normal_concat=range(2, 6), reduce=[('max_pool_3x3', 1), ('max_pool_3x3', 0), ('dil_conv_5x5', 2), ('max_pool_3x3', 1), ('dil_conv_5x5', 3), ('dil_conv_3x3', 2), ('dil_conv_5x5', 4), ('dil_conv_5x5', 2)], reduce_concat=range(2, 6))"`
+
+* Training from scratch for verification:
     
+    `python train_verification.py --cfg exps/scratch/scratch.yaml --text_arch GENOTYPE`
+
+
 * Evaluation:
 
   * Identification
 
-    `python evaluate_identification.py --cfg exps/scratch/scratch.yaml --load_path /path/to/the/trained/model`
+    `python evaluate_identification.py --cfg exps/scratch/scratch_iden.yaml --load_path /path/to/the/trained/model`
 
   * Verification
   
-    `python evaluate_verification.py --cfg exps/scratch/scratch.yaml --load_path /path/to/the/trained/model`
+    `python evaluate_verification.py --cfg exps/scratch/scratch_veri.yaml --load_path /path/to/the/trained/model`
 
 
 

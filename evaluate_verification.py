@@ -80,7 +80,7 @@ def main():
         model.load_state_dict(checkpoint['state_dict'])
         args.path_helper = checkpoint['path_helper']
 
-        logger = create_logger(args.path_helper['log_path'])
+        logger = create_logger(os.path.dirname(args.load_path))
         logger.info("=> loaded checkpoint '{}'".format(args.load_path))
     else:
         raise AssertionError('Please specify the model to evaluate')
