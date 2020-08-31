@@ -4,21 +4,21 @@ from __future__ import print_function
 
 import argparse
 import numpy as np
-import shutil
 import os
-from pathlib import Path
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
+from pathlib import Path
 
 import torch
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
-from models.model import Network
+from models import resnet
 from config import cfg, update_config
-from utils import set_path, create_logger, save_checkpoint, count_parameters, Genotype
+from utils import set_path, create_logger, save_checkpoint, count_parameters
 from data_objects.DeepSpeakerDataset import DeepSpeakerDataset
-from functions import train_from_scratch, validate_identification
+from data_objects.VoxcelebTestset import VoxcelebTestset
+from functions import train_from_scratch, validate_verification
 from loss import CrossEntropyLoss
 
 
@@ -30,11 +30,6 @@ def parse_args():
                         required=True,
                         type=str)
 
-    parser.add_argument('--text_arch',
-                        help="The text to arch",
-                        required=True,
-                        default=None)
-
     parser.add_argument('opts',
                         help="Modify config options using the command-line",
                         default=None,
@@ -43,8 +38,6 @@ def parse_args():
     parser.add_argument('--load_path',
                         help="The path to resumed dir",
                         default=None)
-
-
 
     args = parser.parse_args()
 
@@ -65,20 +58,17 @@ def main():
     torch.manual_seed(cfg.SEED)
     torch.cuda.manual_seed_all(cfg.SEED)
 
+    # model and optimizer
+    model = eval('resnet.{}(num_classes={})'.format(
+        cfg.MODEL.NAME, cfg.MODEL.NUM_CLASSES))
+    model = model.cuda()
+    optimizer = optim.Adam(
+        model.net_parameters() if hasattr(model, 'net_parameters') else model.parameters(),
+        lr=cfg.TRAIN.LR,
+    )
+
     # Loss
     criterion = CrossEntropyLoss(cfg.MODEL.NUM_CLASSES).cuda()
-
-    # load arch
-    genotype = eval(args.text_arch)
-
-    model = Network(cfg.MODEL.INIT_CHANNELS, cfg.MODEL.NUM_CLASSES, cfg.MODEL.LAYERS, genotype)
-    model = model.cuda()
-
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=cfg.TRAIN.LR,
-        weight_decay=cfg.TRAIN.WD,
-    )
 
     # resume && make log dir and logger
     if args.load_path and os.path.exists(args.load_path):
@@ -90,33 +80,29 @@ def main():
         begin_epoch = checkpoint['epoch']
         last_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
-        best_acc1 = checkpoint['best_acc1']
+        best_eer = checkpoint['best_eer']
         optimizer.load_state_dict(checkpoint['optimizer'])
         args.path_helper = checkpoint['path_helper']
 
         logger = create_logger(args.path_helper['log_path'])
-        logger.info("=> loaded checkloggpoint '{}'".format(checkpoint_file))
+        logger.info("=> loaded checkpoint '{}'".format(checkpoint_file))
     else:
         exp_name = args.cfg.split('/')[-1].split('.')[0]
-        args.path_helper = set_path('logs_scratch', exp_name)
+        args.path_helper = set_path('logs', exp_name)
         logger = create_logger(args.path_helper['log_path'])
         begin_epoch = cfg.TRAIN.BEGIN_EPOCH
-        best_acc1 = 0.0
+        best_eer = 1.0
         last_epoch = -1
     logger.info(args)
     logger.info(cfg)
-    logger.info(f"selected architecture: {genotype}")
     logger.info("Number of parameters: {}".format(count_parameters(model)))
-
-    # copy model file
-    this_dir = os.path.dirname(__file__)
-    shutil.copy2(
-        os.path.join(this_dir, './models', cfg.MODEL.NAME + '.py'),
-        args.path_helper['ckpt_path'])
 
     # dataloader
     train_dataset = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'train')
+        Path(cfg.DATASET.DATA_DIR),  cfg.DATASET.SUB_DIR, cfg.DATASET.PARTIAL_N_FRAMES)
+    test_dataset_verification = VoxcelebTestset(
+        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES
+    )
     train_loader = torch.utils.data.DataLoader(
         dataset=train_dataset,
         batch_size=cfg.TRAIN.BATCH_SIZE,
@@ -125,15 +111,13 @@ def main():
         shuffle=True,
         drop_last=True,
     )
-    test_dataset = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
-    test_loader = torch.utils.data.DataLoader(
-        dataset=test_dataset,
+    test_loader_verification = torch.utils.data.DataLoader(
+        dataset=test_dataset_verification,
         batch_size=1,
         num_workers=cfg.DATASET.NUM_WORKERS,
         pin_memory=True,
-        shuffle=True,
-        drop_last=True,
+        shuffle=False,
+        drop_last=False,
     )
 
     # training setting
@@ -151,28 +135,23 @@ def main():
 
     for epoch in tqdm(range(begin_epoch, cfg.TRAIN.END_EPOCH), desc='train progress'):
         model.train()
-        model.drop_path_prob = cfg.MODEL.DROP_PATH_PROB * epoch / cfg.TRAIN.END_EPOCH
-
-        train_from_scratch(cfg, model, optimizer, train_loader, criterion, epoch, writer_dict)
-
-        if epoch % cfg.VAL_FREQ == 0 or epoch == cfg.TRAIN.END_EPOCH - 1:
-            acc = validate_identification(cfg, model, test_loader, criterion)
+        train_from_scratch(cfg, model, optimizer, train_loader, criterion, epoch, writer_dict, lr_scheduler)
+        if epoch % cfg.VAL_FREQ == 0:
+            eer = validate_verification(cfg, model, test_loader_verification)
 
             # remember best acc@1 and save checkpoint
-            is_best = acc > best_acc1
-            best_acc1 = max(acc, best_acc1)
+            is_best = eer < best_eer
+            best_eer = min(eer, best_eer)
 
             # save
             logger.info('=> saving checkpoint to {}'.format(args.path_helper['ckpt_path']))
             save_checkpoint({
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
-                'best_acc1': best_acc1,
+                'best_eer': best_eer,
                 'optimizer': optimizer.state_dict(),
-                'path_helper': args.path_helper,
-                'genotype': genotype,
+                'path_helper': args.path_helper
             }, is_best, args.path_helper['ckpt_path'], 'checkpoint_{}.pth'.format(epoch))
-
         lr_scheduler.step(epoch)
 
 

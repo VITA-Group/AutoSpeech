@@ -17,10 +17,10 @@ def find_classes(speakers):
 
 class DeepSpeakerDataset(data.Dataset):
 
-    def __init__(self, data_dir, partial_n_frames, partition=None, is_test=False):
+    def __init__(self, data_dir, sub_dir, partial_n_frames, partition=None, is_test=False):
         super(DeepSpeakerDataset, self).__init__()
         self.data_dir = data_dir
-        self.root = data_dir.joinpath('feature')
+        self.root = data_dir.joinpath('feature', sub_dir)
         self.partition = partition
         self.partial_n_frames = partial_n_frames
         self.is_test = is_test

@@ -9,7 +9,7 @@ def get_test_paths(pairs_path, db_dir):
     def convert_folder_name(path):
         basename = os.path.splitext(path)[0]
         items = basename.split('/')
-        speaker_dir = 'wav_{}'.format(items[0])
+        speaker_dir = items[0]
         fname = '{}_{}.npy'.format(items[1], items[2])
         p = os.path.join(speaker_dir, fname)
         return p
@@ -38,12 +38,13 @@ def get_test_paths(pairs_path, db_dir):
 
     return path_list
 
+
 class VoxcelebTestset(data.Dataset):
     def __init__(self, data_dir, partial_n_frames):
         super(VoxcelebTestset, self).__init__()
         self.data_dir = data_dir
-        self.root = data_dir.joinpath('feature')
-        self.test_pair_txt_fpath = data_dir.joinpath('veri_test.txt')
+        self.root = data_dir.joinpath('feature', 'test')
+        self.test_pair_txt_fpath = data_dir.joinpath('veri_test2.txt')
         self.test_pairs = get_test_paths(self.test_pair_txt_fpath, self.root)
         self.partial_n_frames = partial_n_frames
         mean = np.load(self.data_dir.joinpath('mean.npy'))

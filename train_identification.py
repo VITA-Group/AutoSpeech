@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Date    : 2019-08-09
-# @Author  : Xinyu Gong (xy_gong@tamu.edu)
-# @Link    : None
-# @Version : 0.0
-
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -13,23 +6,21 @@ import argparse
 import numpy as np
 import shutil
 import os
+from pathlib import Path
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
-from pathlib import Path
 
 import torch
 import torch.optim as optim
+
 import torch.backends.cudnn as cudnn
 
+from models.model import Network
 from config import cfg, update_config
-from utils import set_path, create_logger, save_checkpoint
+from utils import set_path, create_logger, save_checkpoint, count_parameters, Genotype
 from data_objects.DeepSpeakerDataset import DeepSpeakerDataset
-from functions import train, validate_identification
-from architect import Architect
+from functions import train_from_scratch, validate_identification
 from loss import CrossEntropyLoss
-from torch.utils.data import DataLoader
-from spaces import primitives_1, primitives_2, primitives_3
-from models.model_search import Network
 
 
 def parse_args():
@@ -49,6 +40,10 @@ def parse_args():
                         help="The path to resumed dir",
                         default=None)
 
+    parser.add_argument('--text_arch',
+                        help="The text to arch",
+                        default=None)
+
     args = parser.parse_args()
 
     return args
@@ -57,6 +52,7 @@ def parse_args():
 def main():
     args = parse_args()
     update_config(cfg, args)
+    assert args.text_arch
 
     # cudnn related setting
     cudnn.benchmark = cfg.CUDNN.BENCHMARK
@@ -71,19 +67,14 @@ def main():
     # Loss
     criterion = CrossEntropyLoss(cfg.MODEL.NUM_CLASSES).cuda()
 
-    # model and optimizer
-    model = Network(cfg.MODEL.INIT_CHANNELS, cfg.MODEL.NUM_CLASSES, cfg.MODEL.LAYERS, criterion, primitives_2,
-                    drop_path_prob=cfg.TRAIN.DROPPATH_PROB)
+    # load arch
+    genotype = eval(args.text_arch)
+
+    model = Network(cfg.MODEL.INIT_CHANNELS, cfg.MODEL.NUM_CLASSES, cfg.MODEL.LAYERS, genotype)
     model = model.cuda()
 
-    # weight params
-    arch_params = list(map(id, model.arch_parameters()))
-    weight_params = filter(lambda p: id(p) not in arch_params,
-                           model.parameters())
-
-    # Optimizer
     optimizer = optim.Adam(
-        weight_params,
+        model.parameters(),
         lr=cfg.TRAIN.LR
     )
 
@@ -102,29 +93,22 @@ def main():
         args.path_helper = checkpoint['path_helper']
 
         logger = create_logger(args.path_helper['log_path'])
-        logger.info("=> loaded checkpoint '{}'".format(checkpoint_file))
+        logger.info("=> loaded checkloggpoint '{}'".format(checkpoint_file))
     else:
         exp_name = args.cfg.split('/')[-1].split('.')[0]
-        args.path_helper = set_path('logs_search', exp_name)
+        args.path_helper = set_path('logs_scratch', exp_name)
         logger = create_logger(args.path_helper['log_path'])
         begin_epoch = cfg.TRAIN.BEGIN_EPOCH
         best_acc1 = 0.0
         last_epoch = -1
-
     logger.info(args)
     logger.info(cfg)
-
-    # copy model file
-    this_dir = os.path.dirname(__file__)
-    shutil.copy2(
-        os.path.join(this_dir, 'models', cfg.MODEL.NAME + '.py'),
-        args.path_helper['ckpt_path'])
+    logger.info(f"selected architecture: {genotype}")
+    logger.info("Number of parameters: {}".format(count_parameters(model)))
 
     # dataloader
     train_dataset = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'train')
-    val_dataset = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'val')
+        Path(cfg.DATASET.DATA_DIR),  cfg.DATASET.SUB_DIR,  cfg.DATASET.PARTIAL_N_FRAMES, 'train')
     train_loader = torch.utils.data.DataLoader(
         dataset=train_dataset,
         batch_size=cfg.TRAIN.BATCH_SIZE,
@@ -133,16 +117,8 @@ def main():
         shuffle=True,
         drop_last=True,
     )
-    val_loader = torch.utils.data.DataLoader(
-        dataset=val_dataset,
-        batch_size=cfg.TRAIN.BATCH_SIZE,
-        num_workers=cfg.DATASET.NUM_WORKERS,
-        pin_memory=True,
-        shuffle=True,
-        drop_last=True,
-    )
     test_dataset = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
+        Path(cfg.DATASET.DATA_DIR),  cfg.DATASET.SUB_DIR, cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
     test_loader = torch.utils.data.DataLoader(
         dataset=test_dataset,
         batch_size=1,
@@ -160,25 +136,18 @@ def main():
     }
 
     # training loop
-    architect = Architect(model, cfg)
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, cfg.TRAIN.END_EPOCH, cfg.TRAIN.LR_MIN,
         last_epoch=last_epoch
     )
 
-    for epoch in tqdm(range(begin_epoch, cfg.TRAIN.END_EPOCH), desc='search progress'):
+    for epoch in tqdm(range(begin_epoch, cfg.TRAIN.END_EPOCH), desc='train progress'):
         model.train()
+        model.drop_path_prob = cfg.MODEL.DROP_PATH_PROB * epoch / cfg.TRAIN.END_EPOCH
 
-        genotype = model.genotype()
-        logger.info('genotype = %s', genotype)
+        train_from_scratch(cfg, model, optimizer, train_loader, criterion, epoch, writer_dict)
 
-        if cfg.TRAIN.DROPPATH_PROB != 0:
-            model.drop_path_prob = cfg.TRAIN.DROPPATH_PROB * epoch / (cfg.TRAIN.END_EPOCH - 1)
-
-        train(cfg, model, optimizer, train_loader, val_loader, criterion, architect, epoch, writer_dict)
-
-        if epoch % cfg.VAL_FREQ == 0:
-            # get threshold and evaluate on validation set
+        if epoch % cfg.VAL_FREQ == 0 or epoch == cfg.TRAIN.END_EPOCH - 1:
             acc = validate_identification(cfg, model, test_loader, criterion)
 
             # remember best acc@1 and save checkpoint
@@ -192,13 +161,11 @@ def main():
                 'state_dict': model.state_dict(),
                 'best_acc1': best_acc1,
                 'optimizer': optimizer.state_dict(),
-                'arch': model.arch_parameters(),
+                'path_helper': args.path_helper,
                 'genotype': genotype,
-                'path_helper': args.path_helper
             }, is_best, args.path_helper['ckpt_path'], 'checkpoint_{}.pth'.format(epoch))
 
         lr_scheduler.step(epoch)
-
 
 
 if __name__ == '__main__':

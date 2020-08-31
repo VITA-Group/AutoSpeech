@@ -3,6 +3,7 @@ from data_objects.compute_mean_std import compute_mean_std
 from data_objects.partition_voxceleb import partition_voxceleb
 from pathlib import Path
 import argparse
+import subprocess
 
 if __name__ == "__main__":
     class MyFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawDescriptionHelpFormatter):
@@ -19,15 +20,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Process the arguments
-    out_dir = args.dataset_root.joinpath("feature")
+    dev_out_dir = args.dataset_root.joinpath("feature", "dev")
+    test_out_dir = args.dataset_root.joinpath("feature", "test")
+    merged_out_dir = args.dataset_root.joinpath("feature", "merged")
     assert args.dataset_root.exists()
     assert args.dataset_root.joinpath('iden_split.txt').exists()
     assert args.dataset_root.joinpath('veri_test.txt').exists()
     assert args.dataset_root.joinpath('vox1_meta.csv').exists()
-    out_dir.mkdir(exist_ok=True, parents=True)
+    dev_out_dir.mkdir(exist_ok=True, parents=True)
+    test_out_dir.mkdir(exist_ok=True, parents=True)
+    merged_out_dir.mkdir(exist_ok=True, parents=True)
 
     # Preprocess the datasets
-    preprocess_voxceleb1(args.dataset_root, out_dir, args.skip_existing)
-    compute_mean_std(out_dir, args.dataset_root.joinpath('mean.npy'), args.dataset_root.joinpath('std.npy'))
-    partition_voxceleb(out_dir, args.dataset_root.joinpath('iden_split.txt'))
+    preprocess_voxceleb1(args.dataset_root, 'dev', dev_out_dir, args.skip_existing)
+    preprocess_voxceleb1(args.dataset_root, 'test', test_out_dir, args.skip_existing)
+    for path in dev_out_dir.iterdir():
+        subprocess.call(['cp', '-r', path.as_posix(), merged_out_dir.as_posix()])
+    for path in test_out_dir.iterdir():
+        subprocess.call(['cp', '-r', path.as_posix(), merged_out_dir.as_posix()])
+    compute_mean_std(merged_out_dir, args.dataset_root.joinpath('mean.npy'),
+                     args.dataset_root.joinpath('std.npy'))
+    partition_voxceleb(merged_out_dir, args.dataset_root.joinpath('iden_split.txt'))
     print("Done")

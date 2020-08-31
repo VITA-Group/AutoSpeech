@@ -63,8 +63,7 @@ def main():
     model = model.cuda()
     optimizer = optim.Adam(
         model.net_parameters() if hasattr(model, 'net_parameters') else model.parameters(),
-        lr=cfg.TRAIN.LR,
-        weight_decay=cfg.TRAIN.WD,
+        lr=cfg.TRAIN.LR
     )
 
     # Loss
@@ -100,9 +99,9 @@ def main():
 
     # dataloader
     train_dataset = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'train')
+        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.SUB_DIR, cfg.DATASET.PARTIAL_N_FRAMES, 'train')
     test_dataset_identification = DeepSpeakerDataset(
-        Path(cfg.DATASET.DATA_DIR), cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
+        Path(cfg.DATASET.DATA_DIR),  cfg.DATASET.SUB_DIR, cfg.DATASET.PARTIAL_N_FRAMES, 'test', is_test=True)
     train_loader = torch.utils.data.DataLoader(
         dataset=train_dataset,
         batch_size=cfg.TRAIN.BATCH_SIZE,

@@ -7,16 +7,15 @@ CUDNN:
   ENABLED: true
 
 DATASET:
-  DATA_DIR: '/path/to/VoxCeleb'
-  DATASET: 'train'
+  DATA_DIR: '/path/to/VoxCeleb1'
+  SUB_DIR: 'merged'
   NUM_WORKERS: 0
   PARTIAL_N_FRAMES: 300
 
 TRAIN:
-  BATCH_SIZE: 48
+  BATCH_SIZE: 128
   LR: 0.01
   LR_MIN: 0.001
-  WD: 0.0003
   BETA1: 0.9
   BETA2: 0.999
 
@@ -24,7 +23,6 @@ TRAIN:
   END_EPOCH: 301
 
 MODEL:
-  NAME: 'model'
+  NAME: 'resnet34'
   NUM_CLASSES: 1251
-  LAYERS: 8
   INIT_CHANNELS: 64

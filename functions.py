@@ -205,8 +205,8 @@ def validate_identification(cfg, model, test_loader, criterion):
             target = target.cuda(non_blocking=True)
 
             # compute output
-            outputs = model(input)
-            output = torch.mean(outputs, dim=0, keepdim=True)
+            output = model(input)
+            output = torch.mean(output, dim=0, keepdim=True)
             output = model.forward_classifier(output)
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
             top1.update(acc1[0], input.size(0))

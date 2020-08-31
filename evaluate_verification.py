@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Date    : 2019-08-09
-# @Author  : Xinyu Gong (xy_gong@tamu.edu)
-# @Link    : None
-# @Version : 0.0
-
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -41,7 +34,6 @@ def parse_args():
     parser.add_argument('--load_path',
                         help="The path to resumed dir",
                         default=None)
-
     parser.add_argument('--text_arch',
                         help="The path to arch",
                         default=None)
@@ -78,8 +70,6 @@ def main():
         model.drop_path_prob = 0.0
     else:
         model = eval('resnet.{}(num_classes={})'.format(cfg.MODEL.NAME, cfg.MODEL.NUM_CLASSES))
-    # model = Network(cfg.MODEL.NAME, cfg.MODEL.EMBEDDING_DIM, cfg.MODEL.NUM_CLASSES)
-    # model = DeepSpeakerModel(cfg.MODEL.EMBEDDING_DIM, cfg.MODEL.NUM_CLASSES)
     model = model.cuda()
 
     # resume && make log dir and logger

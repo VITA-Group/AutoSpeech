@@ -65,7 +65,7 @@ def _preprocess_speaker_dirs(speaker_dirs, dataset_name, datasets_root, out_dir,
     # Function to preprocess utterances for one speaker
     def preprocess_speaker(speaker_dir: Path):
         # Give a name to the speaker that includes its dataset
-        speaker_name = "_".join(speaker_dir.relative_to(datasets_root).parts)
+        speaker_name = speaker_dir.parts[-1]
 
         # Create an output directory with that name, as well as a txt file containing a
         # reference to each source file.
@@ -121,7 +121,7 @@ def _preprocess_speaker_dirs(speaker_dirs, dataset_name, datasets_root, out_dir,
     print("Done preprocessing %s.\n" % dataset_name)
 
 
-def preprocess_voxceleb1(dataset_root: Path, out_dir: Path, skip_existing=False):
+def preprocess_voxceleb1(dataset_root: Path, parition: str, out_dir: Path, skip_existing=False):
     # Initialize the preprocessing
     dataset_name = "VoxCeleb1"
     dataset_root, logger = _init_preprocess_dataset(dataset_name, dataset_root, out_dir)
@@ -140,7 +140,7 @@ def preprocess_voxceleb1(dataset_root: Path, out_dir: Path, skip_existing=False)
           (len(keep_speaker_ids), len(nationalities)))
 
     # Get the speaker directories for anglophone speakers only
-    speaker_dirs = dataset_root.joinpath("wav").glob("*")
+    speaker_dirs = dataset_root.joinpath(parition).glob("*")
     speaker_dirs = [speaker_dir for speaker_dir in speaker_dirs]
 
     print("VoxCeleb1: found %d anglophone speakers on the disk." %
