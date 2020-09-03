@@ -7,8 +7,8 @@ CUDNN:
   ENABLED: true
 
 DATASET:
-  DATA_DIR: '/path/to/VoxCeleb'
-  DATASET: 'train'
+  DATA_DIR: '/path/to/VoxCeleb1'
+  SUB_DIR: 'merged'
   NUM_WORKERS: 0
   PARTIAL_N_FRAMES: 300
 
