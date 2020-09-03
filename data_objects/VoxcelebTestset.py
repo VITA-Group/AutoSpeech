@@ -44,7 +44,7 @@ class VoxcelebTestset(data.Dataset):
         super(VoxcelebTestset, self).__init__()
         self.data_dir = data_dir
         self.root = data_dir.joinpath('feature', 'test')
-        self.test_pair_txt_fpath = data_dir.joinpath('veri_test2.txt')
+        self.test_pair_txt_fpath = data_dir.joinpath('veri_test.txt')
         self.test_pairs = get_test_paths(self.test_pair_txt_fpath, self.root)
         self.partial_n_frames = partial_n_frames
         mean = np.load(self.data_dir.joinpath('mean.npy'))
