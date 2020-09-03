@@ -37,7 +37,7 @@ left: normal cell. right: reduction cell
 * Other dependencies: `pip install -r requirements`
 
 ### Dataset
-[VoxCeleb1](http://www.robots.ox.ac.uk/~vgg/data/voxceleb/vox1.html): You will need `DevA-DevD` and `Test` parts. Additionally, you will need original files: `vox1_meta.csv`, `iden_split.txt`, and `veri_test.txt` from official website.
+[VoxCeleb1](http://www.robots.ox.ac.uk/~vgg/data/voxceleb/vox1.html): You will need `DevA-DevD` and `Test` parts. Additionally, you will need original files: `vox1_meta.csv`, `iden_split.txt`, and `veri_test.txt` from official website. Alternatively, the dataset can be downloaded using 'dl_script.sh'.
 
 The data should be organized as:
 * VoxCeleb1
