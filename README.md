@@ -41,8 +41,8 @@ left: normal cell. right: reduction cell
 
 The data should be organized as:
 * VoxCeleb1
-   * dev
-   * test
+   * dev/wav/...
+   * test/wav/...
    * vox1_meta.csv
    * iden_split.txt
    * veri_test.txt
