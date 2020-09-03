@@ -140,7 +140,7 @@ def preprocess_voxceleb1(dataset_root: Path, parition: str, out_dir: Path, skip_
           (len(keep_speaker_ids), len(nationalities)))
 
     # Get the speaker directories for anglophone speakers only
-    speaker_dirs = dataset_root.joinpath(parition).glob("*")
+    speaker_dirs = dataset_root.joinpath(parition, 'wav').glob("*")
     speaker_dirs = [speaker_dir for speaker_dir in speaker_dirs]
 
     print("VoxCeleb1: found %d anglophone speakers on the disk." %
