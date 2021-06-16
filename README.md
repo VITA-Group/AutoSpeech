@@ -1,5 +1,7 @@
 # AutoSpeech: Neural Architecture Search for Speaker Recognition
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+
 Code for this paper [AutoSpeech: Neural Architecture Search for Speaker Recognition](https://arxiv.org/abs/2005.03215)
 
 Shaojin Ding*, Tianlong Chen*, Xinyu Gong, Weiwei Zha, Zhangyang Wang
