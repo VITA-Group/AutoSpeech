@@ -1,7 +1,0 @@
-logs/**
-logs_search/**
-models/__pycache__/**
-__pycache__/**
-config/__pycache__/**
-data_objects/__pycache__/**
-logs_scratch/**
