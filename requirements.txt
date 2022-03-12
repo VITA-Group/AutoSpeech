@@ -13,7 +13,7 @@ matplotlib==3.2.1
 multiprocess==0.70.9
 numba==0.49.0
 numpy==1.18.4
-Pillow==7.1.2
+Pillow==9.0.1
 protobuf==3.11.3
 pycparser==2.20
 pyparsing==2.4.7
