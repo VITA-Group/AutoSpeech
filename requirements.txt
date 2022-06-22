@@ -12,7 +12,7 @@ llvmlite==0.32.0
 matplotlib==3.2.1
 multiprocess==0.70.9
 numba==0.49.0
-numpy==1.18.4
+numpy==1.22.0
 Pillow==7.1.2
 protobuf==3.11.3
 pycparser==2.20
