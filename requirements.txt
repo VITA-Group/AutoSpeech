@@ -5,7 +5,7 @@ cycler==0.10.0
 decorator==4.4.2
 dill==0.3.1.1
 future==0.18.2
-joblib==0.14.1
+joblib==1.2.0
 kiwisolver==1.2.0
 librosa==0.7.2
 llvmlite==0.32.0
