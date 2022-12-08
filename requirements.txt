@@ -1,5 +1,5 @@
 audioread==2.1.8
-certifi==2020.4.5.1
+certifi==2022.12.7
 cffi==1.14.0
 cycler==0.10.0
 decorator==4.4.2
